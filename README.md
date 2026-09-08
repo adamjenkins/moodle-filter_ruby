@@ -202,6 +202,29 @@ the same sources produces byte-identical files, so an unexpected diff means the
 sources changed. When they do, update the `<version>` of each library in
 `thirdpartylibs.xml` to match.
 
+Languages
+=========
+
+English and Japanese ship with the plugin. The Japanese pack is a natural fit
+here — the people configuring a furigana filter are usually teaching in Japanese —
+so `lang/ja/filter_ruby.php` is included rather than left to AMOS alone.
+
+It takes effect only once the Japanese language pack is installed on the site
+(*Site administration → Language → Language packs*). Moodle builds the list of
+languages it will look for from the installed packs, so with no `ja` pack the
+plugin's own `lang/ja` is never consulted and every string falls back to English —
+that is Moodle behaviour, not a fault in the translation.
+
+If `ja` is later translated in AMOS, the AMOS version wins: core loads a plugin's
+own `lang/<lang>/` first and the installed language pack afterwards
+(`lib/classes/string_manager_standard.php`, "Legacy location - used by contrib
+only"), so the later include overrides. The bundled file is a sensible default,
+not a thing that blocks the official translation.
+
+Two option labels in the course settings form — *On* and *Off* — come from core's
+own `filters` strings, and core's Japanese pack leaves them in English. They are
+deliberately not overridden here, so the form matches Moodle's own filter pages.
+
 Privacy
 =======
 
