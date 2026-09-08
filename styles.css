@@ -1,0 +1,75 @@
+/* Furigana filter (filter_ruby).
+ *
+ * Moodle aggregates every enabled plugin's styles.css into the theme sheet, so
+ * nothing here is requested by the filter itself -- and a change to this file
+ * only becomes visible after a theme cache purge.
+ *
+ * Class contract with classes/local/annotator.php: every generated element is
+ * <ruby class="filter_ruby">, gaining "filter_ruby--hover" or
+ * "filter_ruby--toggle" in those two display modes (annotator.php:415-417).
+ * The "all" and "first" modes carry the base class only and are left to the
+ * browser's own ruby rendering.
+ *
+ * Both hidden states use visibility, never display: the annotation must keep
+ * its box so that revealing a reading cannot reflow the line it sits in.
+ */
+
+.filter_ruby {
+    /* Readings sit above the base text; ruby-position is not universally the
+       default for vertical writing modes, so state it. */
+    ruby-position: over;
+    /* Without this the base characters are spread apart to match a wider
+       reading, so 勉強/べんきょう renders as "勉 強". Centring keeps the word
+       intact and lets the reading overhang instead. */
+    ruby-align: center;
+}
+
+.filter_ruby rt {
+    font-size: 0.5em;
+    font-weight: normal;
+    line-height: 1.1;
+    /* The reading is an aid, not a selection target: dragging over a word
+       should copy the word, not the word and its furigana interleaved. */
+    user-select: none;
+}
+
+/* Hover mode: the reading is present but invisible until the reader asks.
+   :focus-within only fires when the ruby element contains something focusable
+   (a link inside the annotated word, say) -- the annotator adds no tabindex --
+   so it is a bonus rather than the keyboard story. Keyboard readers are served
+   by the toggle mode, which is why both modes exist. */
+.filter_ruby--hover rt {
+    visibility: hidden;
+}
+
+.filter_ruby--hover:hover rt,
+.filter_ruby--hover:focus rt,
+.filter_ruby--hover:focus-within rt {
+    visibility: visible;
+}
+
+.filter_ruby--hover {
+    cursor: help;
+}
+
+/* Toggle mode: hidden until the reader turns furigana on. The body class is
+   written by amd/src/toggle.js and mirrors the filter_ruby_show preference. */
+.filter_ruby--toggle rt {
+    visibility: hidden;
+}
+
+body.filter_ruby-show .filter_ruby--toggle rt {
+    visibility: visible;
+}
+
+/* The toggle control. .visually-hidden is core's own Bootstrap 5 utility and is
+   used, not redefined, by the module; .sr-only was retired with Bootstrap 4. */
+.filter_ruby-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
+}
+
+.filter_ruby-toggle[aria-pressed="true"] {
+    font-weight: bold;
+}

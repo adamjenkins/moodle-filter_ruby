@@ -1,0 +1,16 @@
+# Editor / OS cruft
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# Node / build tooling
+/node_modules/
+/vendor/
+npm-debug.log*
+
+# Test / CI artefacts
+/.phpunit.result.cache
+/moodle/

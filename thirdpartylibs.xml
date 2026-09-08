@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<libraries>
+  <library>
+    <location>data</location>
+    <name>JMdict</name>
+    <description>Japanese-multilingual dictionary. The generated tier files in data/ carry word readings derived from the kanji headwords and their frequency tags in the English edition, JMdict_e.</description>
+    <version>2026-09-08</version>
+    <license>CC BY-SA</license>
+    <licenseversion>4.0</licenseversion>
+    <repository>https://www.edrdg.org/jmdict/j_jmdict.html</repository>
+    <copyrights>
+      <copyright>Electronic Dictionary Research and Development Group, Monash University</copyright>
+    </copyrights>
+    <customised/>
+  </library>
+  <library>
+    <location>data</location>
+    <name>KANJIDIC2</name>
+    <description>Kanji database. The generated tier files in data/ use its grade field to sort words into school tiers and its on and kun readings for the gated single-kanji fallback.</description>
+    <version>2026-251</version>
+    <license>CC BY-SA</license>
+    <licenseversion>4.0</licenseversion>
+    <repository>https://www.edrdg.org/wiki/index.php/KANJIDIC_Project</repository>
+    <copyrights>
+      <copyright>Electronic Dictionary Research and Development Group, Monash University</copyright>
+    </copyrights>
+    <customised/>
+  </library>
+</libraries>
