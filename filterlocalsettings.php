@@ -62,7 +62,7 @@ class ruby_filter_local_settings_form extends \filter_local_settings_form {
     const DISPLAYMODES = ['all', 'first', 'hover', 'toggle'];
 
     /** @var array Word list check problems that must block the save. Everything else is a warning. */
-    const BLOCKING_PROBLEMS = ['noseparator', 'emptyword'];
+    const BLOCKING_PROBLEMS = ['noseparator', 'emptyword', 'toolong'];
 
     /**
      * Add the form controls: the same seven settings as the site defaults page.
@@ -136,8 +136,9 @@ class ruby_filter_local_settings_form extends \filter_local_settings_form {
     /**
      * Reject a word list that has lines the parser could not make sense of.
      *
-     * Only 'noseparator' and 'emptyword' block the save. 'notkana' is a warning: a
-     * reading in kanji or romaji is odd but still displayable, so it saves.
+     * 'noseparator', 'emptyword' and 'toolong' block the save. 'notkana' is a
+     * warning: a reading in kanji or romaji is odd but still displayable, so it
+     * saves, and save_changes() reports it.
      *
      * @param array $data the submitted data.
      * @param array $files the submitted files.
@@ -153,7 +154,11 @@ class ruby_filter_local_settings_form extends \filter_local_settings_form {
             }
             // The line text is whatever the user typed, and form errors are printed as
             // HTML, so it is escaped here at the sink.
-            $a = (object) ['line' => $problem['line'], 'text' => s($problem['text'])];
+            $a = (object) [
+                'line' => $problem['line'],
+                'text' => s($problem['text']),
+                'max' => \filter_ruby\local\wordlist::MAX_WORD_LENGTH,
+            ];
             $messages[] = get_string('problem_' . $problem['problem'], 'filter_ruby', $a);
         }
 
@@ -173,6 +178,18 @@ class ruby_filter_local_settings_form extends \filter_local_settings_form {
         $data = (array) $data;
 
         $values = ['wordlist' => trim($data['wordlist'] ?? '')];
+
+        // The warnings validation() let through. Core redirects straight after this
+        // call (filter/manage.php), and a queued notification survives the redirect.
+        foreach (\filter_ruby\local\wordlist::check($values['wordlist']) as $problem) {
+            if (in_array($problem['problem'], self::BLOCKING_PROBLEMS, true)) {
+                continue;
+            }
+            // The line text is whatever the user typed; escaped here at the sink.
+            $a = (object) ['line' => $problem['line'], 'text' => s($problem['text'])];
+            \core\notification::warning(get_string('problem_' . $problem['problem'], 'filter_ruby', $a));
+        }
+
         foreach (self::TIERS as $tier) {
             $values['tier_' . $tier] = $this->clean_choice($data['tier_' . $tier] ?? '', [self::ON, self::OFF]);
         }

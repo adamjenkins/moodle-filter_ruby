@@ -28,8 +28,10 @@ Requirements
 Installation
 ============
 
-Download the ZIP, extract into `filter/ruby/`, then log in as an administrator and
-go to *Site administration → Notifications* to complete the install.
+Install from *Site administration → Plugins → Install plugins*, or extract the ZIP
+into `filter/ruby/` (Moodle 4.5 – 5.0) or `public/filter/ruby/` (Moodle 5.1 and
+later), then log in as an administrator and go to *Site administration →
+Notifications* to complete the install.
 
 Then go to *Site administration → Plugins → Filters → Manage filters* and set
 **Ruby (furigana)** to *On*.
@@ -64,9 +66,14 @@ The list is one entry per line:
   *guessed* readings for kanji no list covers.
 - An **empty reading** (`金=` above) *suppresses* annotation of that word — useful
   when a shipped tier dictionary is annotating something your readers do not need.
-- Malformed lines are reported when you save. A missing `=` or an empty word is an
-  error and blocks the save; a reading that is not written in kana is only a
-  warning, so you can still save it deliberately.
+- A word may be at most 32 characters long; no real word comes near that, and a
+  longer entry would slow down every page it is matched against.
+- In the course form, malformed lines are reported when you save. A missing `=`,
+  an empty word or an over-long word is an error and blocks the save; a reading
+  that is not written in kana is only a warning, shown after the save, so you can
+  still save it deliberately.
+- The site-wide list on the admin settings page is not checked when it is saved.
+  Malformed lines there are simply ignored when the list is read.
 
 Inline markup
 =============
@@ -103,8 +110,8 @@ Four independent checkboxes, each turning on a shipped word list:
 | Senior high school words | beyond the junior high list, including name kanji |
 | University and rare words | the rarest kanji, outside the everyday-use list |
 
-Between them the four files hold roughly 9,700 word readings and 3,200 kanji-run
-readings, derived from JMdict and KANJIDIC2 (see *Attribution* below). They are
+Between them the four files hold roughly 9,700 word and kanji-run readings and
+3,200 single-kanji fallback readings, derived from JMdict and KANJIDIC2 (see *Attribution* below). They are
 plain PHP arrays, so they cost a `require` and no parsing at run time.
 
 Ticking a tier means **"annotate words at this level"** — *not* "readers already
@@ -119,8 +126,8 @@ Display modes
 |---|---|
 | Always show, on every occurrence | *(default)* every match is annotated, every time |
 | Show on the first occurrence of each word only | annotate a word once per page, then leave it plain |
-| Show on hover | readings are hidden until the reader hovers over or focuses the word |
-| Reader toggle | readings are hidden until the reader presses the **Furigana** button; the choice is remembered per user |
+| Show on hover | readings are hidden until the reader points at the word with a mouse; keyboard and touch-screen readers cannot reveal them, so use the reader toggle for them |
+| Reader toggle (button) | readings are hidden until the reader presses the **Furigana** button; the choice is remembered per user |
 
 Limitations
 ===========
@@ -205,25 +212,12 @@ sources changed. When they do, update the `<version>` of each library in
 Languages
 =========
 
-English and Japanese ship with the plugin. The Japanese pack is a natural fit
-here — the people configuring a furigana filter are usually teaching in Japanese —
-so `lang/ja/filter_ruby.php` is included rather than left to AMOS alone.
-
-It takes effect only once the Japanese language pack is installed on the site
-(*Site administration → Language → Language packs*). Moodle builds the list of
-languages it will look for from the installed packs, so with no `ja` pack the
-plugin's own `lang/ja` is never consulted and every string falls back to English —
-that is Moodle behaviour, not a fault in the translation.
-
-If `ja` is later translated in AMOS, the AMOS version wins: core loads a plugin's
-own `lang/<lang>/` first and the installed language pack afterwards
-(`lib/classes/string_manager_standard.php`, "Legacy location - used by contrib
-only"), so the later include overrides. The bundled file is a sensible default,
-not a thing that blocks the official translation.
+Only the English strings ship with the plugin, as the Moodle Plugins directory
+asks. Other languages, including Japanese, are translated in AMOS at
+<https://lang.moodle.org/> and reach a site through its installed language packs.
 
 Two option labels in the course settings form — *On* and *Off* — come from core's
-own `filters` strings, and core's Japanese pack leaves them in English. They are
-deliberately not overridden here, so the form matches Moodle's own filter pages.
+own `filters` strings, not from this plugin, so they follow core's translation.
 
 Privacy
 =======
@@ -250,8 +244,18 @@ are used in conformance with the Group's licence, which is Creative Commons
 Attribution-ShareAlike 4.0 International (CC BY-SA 4.0). See
 <https://www.edrdg.org/edrdg/licence.html>.
 
-This acknowledgement is also displayed on the plugin's site settings page, as the
-licence requires for web use.
+This acknowledgement is also displayed on the plugin's site settings page.
+
+The data in `data/` stays under CC BY-SA 4.0 and is declared in
+`thirdpartylibs.xml`. Creative Commons lists CC BY-SA 4.0 as one-way compatible
+with GPLv3 (<https://creativecommons.org/share-your-work/licensing-considerations/compatible-licenses/>),
+so it can be distributed with this GPL plugin.
+
+Support
+=======
+
+Bug reports and feature requests:
+<https://github.com/adamjenkins/moodle-filter_ruby/issues>
 
 License
 =======

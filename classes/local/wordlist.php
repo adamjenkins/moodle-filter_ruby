@@ -69,11 +69,21 @@ class wordlist {
     private const KANA_PATTERN = '/^[\p{Hiragana}\p{Katakana}ー・\s]+$/u';
 
     /**
+     * @var int The longest word, in characters, that a list entry may have.
+     *
+     * The annotator tries every length from the longest entry down to one at each
+     * kanji, so the cost per kanji grows with the square of the longest entry. One
+     * very long line in a course list would otherwise slow every page in that course.
+     * No real word comes near this; the shipped tier data stops at 8 characters.
+     */
+    public const MAX_WORD_LENGTH = 32;
+
+    /**
      * Parse a raw textarea into a word to reading map.
      *
-     * Blank lines and comment lines are skipped. A line with no separator, or
-     * with an empty word on the left of the separator, is malformed and is
-     * silently ignored. An empty reading is NOT malformed: it survives as an
+     * Blank lines and comment lines are skipped. A line with no separator, with
+     * an empty word on the left of the separator, or with a word longer than
+     * MAX_WORD_LENGTH characters, is malformed and is silently ignored. An empty reading is NOT malformed: it survives as an
      * empty string, because that is the documented way to suppress a word.
      * Where the same word appears more than once the last line wins.
      *
@@ -100,6 +110,11 @@ class wordlist {
                 // Nothing to the left of the separator: malformed, ignored.
                 continue;
             }
+            if (mb_strlen($word) > self::MAX_WORD_LENGTH) {
+                // Too long to be a word, and costly to match: ignored, and
+                // reported by check(). Applies to lists stored before the limit too.
+                continue;
+            }
 
             // A later line overwrites an earlier one for the same word.
             $entries[$word] = $reading;
@@ -118,6 +133,7 @@ class wordlist {
      * Problems reported:
      * - 'noseparator': the line has neither '=' nor '＝'. An error.
      * - 'emptyword': there is nothing to the left of the separator. An error.
+     * - 'toolong': the word is longer than MAX_WORD_LENGTH characters. An error.
      * - 'notkana': the reading is not kana. A warning only — the form still saves.
      *
      * An empty reading is the legal "suppress" form and is not a problem at all.
@@ -146,6 +162,10 @@ class wordlist {
             [$word, $reading] = $pair;
             if ($word === '') {
                 $problems[] = ['line' => $linenumber, 'text' => $trimmed, 'problem' => 'emptyword'];
+                continue;
+            }
+            if (mb_strlen($word) > self::MAX_WORD_LENGTH) {
+                $problems[] = ['line' => $linenumber, 'text' => $trimmed, 'problem' => 'toolong'];
                 continue;
             }
 

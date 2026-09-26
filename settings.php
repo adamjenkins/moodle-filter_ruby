@@ -34,7 +34,7 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configtextarea(
         'filter_ruby/wordlist',
         get_string('wordlist', 'filter_ruby'),
-        get_string('wordlist_help', 'filter_ruby'),
+        get_string('wordlist_desc', 'filter_ruby', \filter_ruby\local\wordlist::MAX_WORD_LENGTH),
         '',
         PARAM_RAW,
         '60',
@@ -42,8 +42,8 @@ if ($ADMIN->fulltree) {
     ));
 
     // Tier dictionaries. Independent switches, all off by default. The data ships: the
-    // four generated files in data/ carry roughly 9,700 word readings and 3,200
-    // kanji-run readings between them, so switching one on takes effect immediately.
+    // four generated files in data/ carry roughly 9,700 word and kanji-run readings
+    // and 3,200 single-kanji fallback readings between them, so switching one on takes effect immediately.
     // Off by default all the same, because whether a course wants a level annotated is
     // a teaching decision, not something a site install should assume (decision D3).
     $settings->add(new admin_setting_heading(
@@ -62,8 +62,8 @@ if ($ADMIN->fulltree) {
         ));
     }
 
-    // The EDRDG licence (CC BY-SA 4.0) requires this acknowledgement to be displayed
-    // wherever the derived data is used, so it is rendered here as well as in the README.
+    // The EDRDG acknowledgement for the derived tier data (CC BY-SA 4.0), shown to
+    // administrators here as well as in the README.
     $settings->add(new admin_setting_heading(
         'filter_ruby/edrdgacknowledgement',
         get_string('license'),

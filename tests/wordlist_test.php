@@ -134,6 +134,14 @@ final class wordlist_test extends \advanced_testcase {
                     . "金=  \n  broken line  \n今日=こんにち\n",
                 ['今日' => 'こんにち', '漢字' => 'かんじ', '難しい' => 'むずかしい', '金' => ''],
             ],
+            'a word at the length limit is kept' => [
+                str_repeat('漢', 32) . '=かん',
+                [str_repeat('漢', 32) => 'かん'],
+            ],
+            'a word over the length limit is dropped, the rest of the list is kept' => [
+                str_repeat('漢', 33) . "=かん\n今日=きょう",
+                ['今日' => 'きょう'],
+            ],
         ];
     }
 
@@ -228,6 +236,11 @@ final class wordlist_test extends \advanced_testcase {
                     ['line' => 3, 'text' => '=かんじ', 'problem' => 'emptyword'],
                     ['line' => 4, 'text' => '勉強=benkyou', 'problem' => 'notkana'],
                 ],
+            ],
+            'a word at the length limit is not a problem' => [str_repeat('漢', 32) . '=かん', []],
+            'a word over the length limit is too long' => [
+                "今日=きょう\n" . str_repeat('漢', 33) . '=かん',
+                [['line' => 2, 'text' => str_repeat('漢', 33) . '=かん', 'problem' => 'toolong']],
             ],
         ];
     }

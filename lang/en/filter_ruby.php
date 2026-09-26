@@ -29,8 +29,8 @@ $string['displaymode_help'] = 'How furigana readings are presented to the reader
 
 * **Always show, on every occurrence** — every matched word is annotated, every time it appears.
 * **Show on the first occurrence of each word only** — a word is annotated the first time it appears on the page, then left plain.
-* **Show on hover** — readings are hidden until the reader hovers over (or focuses) the word.
-* **Reader toggle** — readings are hidden until the reader turns them on with the furigana button. The choice is remembered.';
+* **Show on hover** — readings are hidden until the reader points at the word with a mouse. Keyboard and touch-screen readers cannot reveal them, so prefer the reader toggle for them.
+* **Reader toggle (button)** — readings are hidden until the reader turns them on with the furigana button. The choice is remembered.';
 $string['displaymode_hover'] = 'Show on hover';
 $string['displaymode_toggle'] = 'Reader toggle (button)';
 $string['edrdgacknowledgement'] = 'The shipped tier dictionaries are derived from the JMdict/EDICT and KANJIDIC2 files. These files are the property of the Electronic Dictionary Research and Development Group, and are used in conformance with the Group\'s licence, which is Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0). See <a href="https://www.edrdg.org/edrdg/licence.html">https://www.edrdg.org/edrdg/licence.html</a>.';
@@ -44,6 +44,7 @@ $string['privacy:preference:show'] = 'Whether the reader has chosen to show or h
 $string['problem_emptyword'] = 'Line {$a->line}: the text before the "=" is empty ({$a->text}). Each line must read word=reading.';
 $string['problem_noseparator'] = 'Line {$a->line}: no "=" found ({$a->text}). Each line must read word=reading.';
 $string['problem_notkana'] = 'Line {$a->line}: the reading is not written in kana ({$a->text}). The line has still been saved.';
+$string['problem_toolong'] = 'Line {$a->line}: the word is longer than {$a->max} characters ({$a->text}). Put one word on each line.';
 $string['tier_elementary'] = 'Elementary school words';
 $string['tier_elementary_help'] = 'Annotate words whose hardest kanji is taught in elementary school (grades 1-6).';
 $string['tier_jhs'] = 'Junior high school words';
@@ -56,6 +57,7 @@ $string['tiers'] = 'Tier dictionaries';
 $string['tiers_help'] = 'Ticking a tier means "annotate words at this level", not "readers already know this level". The tiers are independent, so you can annotate university-level words while leaving elementary words plain.';
 $string['togglebutton'] = 'Furigana';
 $string['wordlist'] = 'Word list';
+$string['wordlist_desc'] = 'One entry per line, written as word=reading, for example 漢字=かんじ. Blank lines and lines beginning with # are ignored, a later line overrides an earlier one for the same word, and an empty reading (for example 金= ) suppresses annotation of that word. Lines that are not word=reading, or whose word is longer than {$a} characters, are ignored. Course and activity word lists override this list; this list overrides the tier dictionaries.';
 $string['wordlist_help'] = 'One entry per line, written as word=reading, for example 漢字=かんじ
 
 * Blank lines and lines beginning with # are ignored.

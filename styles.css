@@ -6,7 +6,7 @@
  *
  * Class contract with classes/local/annotator.php: every generated element is
  * <ruby class="filter_ruby">, gaining "filter_ruby--hover" or
- * "filter_ruby--toggle" in those two display modes (annotator.php:415-417).
+ * "filter_ruby--toggle" in those two display modes (annotator::class_for_mode()).
  * The "all" and "first" modes carry the base class only and are left to the
  * browser's own ruby rendering.
  *
@@ -22,6 +22,16 @@
        reading, so 勉強/べんきょう renders as "勉 強". Centring keeps the word
        intact and lets the reading overhang instead. */
     ruby-align: center;
+}
+
+/* Core wraps formatted text in div.no-overflow (lib/classes/formatting.php:301),
+   which Boost gives overflow: auto (theme/boost/scss/moodle/core.scss). Browsers
+   do not grow a line box to fit its ruby annotations -- Firefox least of all --
+   so readings on the first line overhang the div's top edge and are clipped:
+   2.5px in Firefox, measured 2026-09-26. Padding the wrapper, only when it holds
+   furigana, gives them room without changing line spacing. */
+.no-overflow:has(ruby.filter_ruby) {
+    padding-top: 0.75em;
 }
 
 .filter_ruby rt {
@@ -62,8 +72,8 @@ body.filter_ruby-show .filter_ruby--toggle rt {
     visibility: visible;
 }
 
-/* The toggle control. .visually-hidden is core's own Bootstrap 5 utility and is
-   used, not redefined, by the module; .sr-only was retired with Bootstrap 4. */
+/* The toggle control. The module gives the button only btn btn-secondary btn-sm,
+   which exist in both Bootstrap 4 (Moodle 4.5) and Bootstrap 5 (5.0 and later). */
 .filter_ruby-controls {
     display: flex;
     justify-content: flex-end;

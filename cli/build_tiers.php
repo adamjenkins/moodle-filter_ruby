@@ -815,8 +815,8 @@ function filter_ruby_render(string $tier, array $words, array $kanji, array $pro
     $out .= " * party libraries admin page reads to tell an administrator that these bytes\n";
     $out .= " * are CC BY-SA 4.0. It therefore carries the licence of its sources and not\n";
     $out .= " * the Moodle GPL boilerplate, exactly as core's own declared third party\n";
-    $out .= " * directories do, and the share-alike term of that licence means it could\n";
-    $out .= " * not be relicensed under the GPL even if we wanted to.\n";
+    $out .= " * directories do. Creative Commons lists CC BY-SA 4.0 as one-way compatible\n";
+    $out .= " * with GPLv3, which is what lets it ship inside this GPL plugin.\n";
     $out .= " *\n";
     $out .= " * @copyright  Electronic Dictionary Research and Development Group, Monash University\n";
     $out .= " * @license    https://creativecommons.org/licenses/by-sa/4.0/ CC BY-SA 4.0\n";

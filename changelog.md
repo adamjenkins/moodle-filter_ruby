@@ -25,8 +25,8 @@ Entries are ordered newest-first.
 - Four independently toggleable tier dictionaries — elementary, junior high,
   senior high, university — grouped by the school level of a word's hardest
   kanji, as given by KANJIDIC2's `<grade>` field. They ship as generated PHP
-  arrays in `data/`, holding roughly 9,700 word readings and 3,200 kanji-run
-  readings between them; the kanji-run keys are what let an inflected form such
+  arrays in `data/`, holding roughly 9,700 word and kanji-run readings and 3,200
+  single-kanji fallback readings between them; the kanji-run keys are what let an inflected form such
   as 難しかった still get a reading on 難.
 - `cli/build_tiers.php`, the developer tool that generates those files from
   JMdict_e and KANJIDIC2 by streaming both with `XMLReader`, sorting words into
@@ -46,8 +46,17 @@ Entries are ordered newest-first.
 - Site defaults in `settings.php` (stored in `config_plugins`) and per-context
   settings in `filterlocalsettings.php` (stored in core's `filter_config` table,
   so they are covered by course backup and restore). No plugin database table.
-- Word-list validation: a line with no `=` separator or an empty word blocks the
-  save; a reading not written in kana is reported as a warning only.
+- Word-list validation in the course form: a line with no `=` separator, an
+  empty word or a word longer than 32 characters blocks the save; a reading not
+  written in kana is reported as a warning after the save. Over-long words are
+  also skipped when any stored list is read, because the matcher's cost per kanji
+  grows with the square of the longest entry.
+- `styles.css` pads core's `div.no-overflow` wrapper when it contains furigana,
+  so the readings on a text's first line are not clipped by its `overflow: auto`
+  (visible in Firefox, which does not grow a line box to fit ruby annotations).
+- Only the English strings ship, as the Plugins directory asks; other languages
+  are translated in AMOS.
+- A GitHub Actions workflow running moodle-plugin-ci across Moodle 4.5 – 5.2.
 - MUC application cache `filter_ruby/dictionary` holding the compiled
   `word => reading` map, keyed by a hash of the effective configuration, so a
   settings change produces a new key and needs no explicit invalidation.
@@ -71,19 +80,23 @@ Entries are ordered newest-first.
 
 ### Verified
 
-- PHPUnit suite green: 262 tests, 474 assertions, 0 failures, exit 0.
-- Every step in `tests/behat/filter_ruby.feature` resolves to a step definition
-  in core, checked by extracting all 630 `@Given`/`@When`/`@Then` annotations
-  from the `behat_*.php` context classes and matching each step line against
-  them; the check was proven non-vacuous by feeding it an invented step, which
-  it reported unmatched. The feature itself has not been executed here.
+- PHPUnit suite green on Moodle 5.2.2+: 277 tests, 518 assertions, exit 0
+  (2026-09-26).
+- Behat feature executed on Moodle 5.2.2+: 5 scenarios, 73 steps passed, exit 0
+  (2026-09-26); with the filter's output disabled the same run fails 5/5, so the
+  feature is not vacuous.
+- moodle-plugin-ci phplint, phpcs and phpdoc (both `--max-warnings 0`), validate
+  and savepoints exit 0; grunt eslint and stylelint clean.
+- The course form was driven in Firefox: an over-long word blocks the save, and
+  a non-kana reading saves and shows the warning.
 - Tier data sizes read back out of the generated files: 4272 / 4683 / 558 / 168
-  word entries and 1026 / 1110 / 859 / 205 kanji-run entries for elementary,
-  junior high, senior high and university respectively.
+  word and kanji-run entries and 1026 / 1110 / 859 / 205 single-kanji fallback
+  entries for elementary, junior high, senior high and university respectively.
 
 ### Attribution
 
 - The tier dictionaries are derived from JMdict/EDICT and KANJIDIC2, property of
   the Electronic Dictionary Research and Development Group, used under CC BY-SA
-  4.0 (https://www.edrdg.org/edrdg/licence.html). The acknowledgement is shown
-  on the plugin's site settings page as the licence requires.
+  4.0 (https://www.edrdg.org/edrdg/licence.html), which Creative Commons lists
+  as one-way compatible with GPLv3. The acknowledgement is shown on the plugin's
+  site settings page and in the README.
