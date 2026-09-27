@@ -1,0 +1,10 @@
+{
+    "name": "adamjenkins/moodle-filter_ruby",
+    "description": "A Moodle text filter that adds furigana (ruby) readings above difficult kanji, with word lists that each course can customise for itself",
+    "type": "moodle-filter",
+    "require": {
+        "moodle/moodle": ">=4.5 <5.4",
+        "moodle/composer-installer": "^1.0"
+    },
+    "license": "GPL-3.0-or-later"
+}
