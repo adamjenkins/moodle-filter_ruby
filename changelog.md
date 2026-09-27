@@ -5,11 +5,17 @@ Entries are ordered newest-first.
 
 ---
 
-## [Unreleased]
+## [1.0.1] (2026092700) — 2026-09-27
+
+### Added
+
+- `composer.json` (package `adamjenkins/moodle-filter_ruby`, type
+  `moodle-filter`), for installation from Packagist.
 
 ### Changed
 
 - Declare Moodle 5.3 support: `$plugin->supported` is now `[405, 503]`.
+- Continuous integration also runs Moodle `main` (5.3beta), non-blocking.
 
 ---
 
