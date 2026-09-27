@@ -23,7 +23,7 @@ Where two entries could match at the same position, the **longest** one wins, so
 Requirements
 ============
 
-- Moodle 4.5 or later (supported: 4.5 – 5.2)
+- Moodle 4.5 or later (supported: 4.5 – 5.3)
 
 Installation
 ============

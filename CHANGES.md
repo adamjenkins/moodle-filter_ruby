@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+- Declare Moodle 5.3 support.
+
 ## v1.0.0 (2026090800)
 
 - Initial release. Adds furigana (ruby) readings to kanji in filtered text, from
