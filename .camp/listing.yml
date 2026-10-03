@@ -1,0 +1,23 @@
+# camp listing manifest — descriptive content for your plugin's page.
+# Edit freely and commit; camp ingests this file at each tagged release.
+# Schema: https://camp-registry.org/schema/listing.schema.json
+name: filter_ruby
+summary: 'A Moodle text filter that adds furigana (ruby) readings above Japanese kanji, with word lists each course can customise.'
+description: |
+  For teachers of Japanese and courses with Japanese reading material. Readings
+  come from three sources, nearest first: inline markup typed by the author
+  ({漢字|かんじ} or ｜漢字《かんじ》), word=reading lists set per site, category,
+  course or activity, and four optional tier dictionaries (elementary to
+  university level) derived from JMdict and KANJIDIC2. Display modes cover
+  always, first occurrence only, on hover, or a per-user reader toggle button.
+labels:
+  # Required disclosure labels — pick all that apply (RFC §4.7):
+  #   fully-free | freemium | paid-service | external-account
+  #   donation-supported | commercial-support-available
+  - fully-free
+# screenshots:
+#   - path: .camp/screenshots/overview.png
+#     caption: Main view
+links:
+  docs: https://github.com/adamjenkins/moodle-filter_ruby#readme
+  issues: https://github.com/adamjenkins/moodle-filter_ruby/issues
