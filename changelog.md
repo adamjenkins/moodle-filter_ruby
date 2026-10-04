@@ -5,6 +5,25 @@ Entries are ordered newest-first.
 
 ---
 
+## [1.0.2] (2026100400) — 2026-10-04
+
+### Added
+
+- Camp release workflow (`.github/workflows/camp-release.yml`): pushing a `v*`
+  tag publishes the release to the camp registry.
+- Camp listing manifest (`.camp/listing.yml`), the plugin's listing text on the
+  camp registry.
+
+### Changed
+
+- `composer.json` uses a caret constraint for `moodle/moodle`
+  (`^4.5 || ^5.0`, was `>=4.5 <5.4`), so new Moodle 5.x releases are not
+  excluded.
+- CI tests `MOODLE_503_STABLE` (blocking) instead of moodle.git `main`, now
+  that Moodle 5.3 is released.
+
+---
+
 ## [1.0.1] (2026092700) — 2026-09-27
 
 ### Added
