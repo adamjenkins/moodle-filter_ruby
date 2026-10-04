@@ -8,16 +8,13 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-24.04
-    # moodle.git main rows are non-blocking (owner decision): main is a moving
-    # target, so a failure there must not fail the workflow.
-    continue-on-error: ${{ matrix.experimental == true }}
 
     services:
       postgres:
-        # Pinned to the lowest release that satisfies every stable branch in the
-        # matrix (5.2 requires >= 16). A newer image would mask minimum-version
-        # breakage. main/5.3 needs PostgreSQL >= 17 (environment.xml 5.3 block),
-        # so the main rows override it via matrix.pgsql-image.
+        # Pinned to the lowest release that satisfies every branch up to 5.2 in
+        # the matrix (5.2 requires >= 16). A newer image would mask minimum-version
+        # breakage. MOODLE_503_STABLE needs PostgreSQL >= 17 (environment.xml 5.3
+        # block), so the 5.3 rows override it via matrix.pgsql-image.
         image: ${{ matrix.database == 'pgsql' && (matrix.pgsql-image || 'postgres:16') || '' }}
         env:
           POSTGRES_USER: 'postgres'
@@ -27,9 +24,9 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
 
       mariadb:
-        # Lowest release satisfying every stable branch (5.0-5.2 require >= 10.11;
-        # 4.5 requires >= 10.6.7, which 10.11 also satisfies). main/5.3 needs
-        # MariaDB >= 11.4 (environment.xml 5.3 block), so the main rows override
+        # Lowest release satisfying every branch up to 5.2 (5.0-5.2 require >= 10.11;
+        # 4.5 requires >= 10.6.7, which 10.11 also satisfies). MOODLE_503_STABLE needs
+        # MariaDB >= 11.4 (environment.xml 5.3 block), so the 5.3 rows override
         # it via matrix.mariadb-image.
         image: ${{ matrix.database == 'mariadb' && (matrix.mariadb-image || 'mariadb:10.11') || '' }}
         env:
@@ -48,11 +45,11 @@ jobs:
       # come from each branch's own environment.xml and core's own push.yml
       # ("lowest/highest PHP supported"):
       #   4.5 -> PHP 8.1-8.3   5.0 -> 8.2-8.4   5.1 -> 8.2-8.4   5.2 -> 8.3-8.4
-      #   main (5.3beta) -> 8.3-8.4
+      #   5.3 -> 8.3-8.4
       # Every branch is tested at both its floor and its ceiling, and the two
       # database engines alternate so both are exercised across the matrix.
-      # The main rows are experimental (non-blocking, see continue-on-error)
-      # and carry their own DB images: 5.3 needs PostgreSQL 17 / MariaDB 11.4.
+      # Every row is blocking. The MOODLE_503_STABLE rows carry their own DB
+      # images: 5.3 needs PostgreSQL 17 / MariaDB 11.4 (environment.xml 5.3 block).
       matrix:
         include:
           - {moodle-branch: MOODLE_405_STABLE, php: '8.1', database: pgsql}
@@ -63,8 +60,8 @@ jobs:
           - {moodle-branch: MOODLE_501_STABLE, php: '8.4', database: mariadb}
           - {moodle-branch: MOODLE_502_STABLE, php: '8.3', database: mariadb}
           - {moodle-branch: MOODLE_502_STABLE, php: '8.4', database: pgsql}
-          - {moodle-branch: main, php: '8.4', database: pgsql, experimental: true, pgsql-image: 'postgres:17', mariadb-image: 'mariadb:11.4'}
-          - {moodle-branch: main, php: '8.3', database: mariadb, experimental: true, pgsql-image: 'postgres:17', mariadb-image: 'mariadb:11.4'}
+          - {moodle-branch: MOODLE_503_STABLE, php: '8.4', database: pgsql, pgsql-image: 'postgres:17', mariadb-image: 'mariadb:11.4'}
+          - {moodle-branch: MOODLE_503_STABLE, php: '8.3', database: mariadb, pgsql-image: 'postgres:17', mariadb-image: 'mariadb:11.4'}
 
     steps:
       - name: Check out repository code
@@ -125,9 +122,9 @@ jobs:
         run: moodle-plugin-ci mustache
 
       # amd/build is a committed artefact, and the grunt toolchain differs per
-      # Moodle branch, so one committed bundle cannot match every branch (main
+      # Moodle branch, so one committed bundle cannot match every branch (5.3
       # included). Gate the check to the branch the bundle was actually built
-      # with (5.2), which also keeps it off main; it still catches
+      # with (5.2), which also keeps it off 5.3; it still catches
       # a stale or hand-edited amd/build, which is the point.
       - name: Grunt
         if: ${{ !cancelled() && matrix.moodle-branch == 'MOODLE_502_STABLE' }}
