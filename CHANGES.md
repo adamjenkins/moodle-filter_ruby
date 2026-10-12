@@ -1,10 +1,15 @@
 # Changes
 
-## v1.0.2 (2026100400)
+## v1.0.3 (2026101200)
 
-- Installing with Composer no longer caps the Moodle version: `composer.json`
-  now requires `moodle/moodle` `^4.5 || ^5.0` (was `>=4.5 <5.4`).
-- Continuous integration now tests against the released Moodle 5.3
-  (`MOODLE_503_STABLE`) instead of Moodle's development branch.
-- Pushing a release tag now also publishes the release to the camp registry,
-  with the plugin's listing text in `.camp/listing.yml`.
+- Faster pages with many activities: each context's resolved filter settings are
+  now cached for the request (MUC request cache `filter_ruby/config`), so the
+  site, category and course settings are read once per page instead of once per
+  activity, and the settings rows still missing are fetched in one query.
+- Added the missing language string for the `dictionary` cache definition, and
+  one for the new `config` cache.
+- The plugin now has an icon (`pix/icon.svg`), shown on *Site administration →
+  Plugins → Plugins overview*.
+- Pushing a release tag now also publishes the release to the Moodle Plugins
+  directory, as a ZIP whose root folder is `ruby`.
+- The camp registry listing now has screenshots.

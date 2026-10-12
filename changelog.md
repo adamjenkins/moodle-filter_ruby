@@ -5,6 +5,29 @@ Entries are ordered newest-first.
 
 ---
 
+## [1.0.3] (2026101200) — 2026-10-12
+
+### Added
+
+- Plugin icon `pix/icon.svg` (a reading bar above 漢), shown on the plugins
+  overview page.
+- Marketplace release workflow (`.github/workflows/moodle-release.yml`): pushing
+  a `v*` tag publishes the release to the Moodle Plugins directory, as a ZIP whose
+  root folder is `ruby`.
+- Screenshots in the camp listing (`.camp/screenshots/`, `.camp/listing.yml`).
+- Language strings `cachedef_dictionary` (was missing) and `cachedef_config`.
+
+### Changed
+
+- `config::for_context()` caches each context's resolved settings, and each
+  context's own `filter_config` rows, in a new request cache
+  (`filter_ruby/config`). Rows shared along a context path are read once per
+  request, missing rows are fetched in one query, and `setup()` and `filter()`
+  no longer resolve the same context twice. The course settings form purges the
+  cache after saving.
+
+---
+
 ## [1.0.2] (2026100400) — 2026-10-04
 
 ### Added

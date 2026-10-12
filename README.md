@@ -20,6 +20,11 @@ Readings come from three places, and the nearest one wins:
 Where two entries could match at the same position, the **longest** one wins, so
 `今日` is read *きょう* rather than 今 + 日.
 
+A companion TinyMCE plugin,
+[Ruby (furigana) for TinyMCE](https://github.com/adamjenkins/moodle-tiny_ruby)
+(`tiny_ruby`), adds and edits the inline markup through a dialog, and copies the
+readings of a text as a word list ready to paste into a course word list.
+
 Requirements
 ============
 
@@ -169,7 +174,11 @@ cleaning has already run.
 
 **No persistent cache of filtered text.** Moodle does not cache filtered output, so
 the filter runs on every page render. The compiled word map is cached (MUC
-application cache `filter_ruby/dictionary`), but the text scan itself is not.
+application cache `filter_ruby/dictionary`), and each context's resolved settings
+are cached for the request (MUC request cache `filter_ruby/config`), so a page with
+many activities reads the shared site, category and course settings once. The text
+scan itself is not cached. The settings cache lasts one request on purpose: Moodle
+announces no change to filter settings, so a longer-lived copy could go stale.
 
 Developer notes
 ===============
@@ -216,8 +225,9 @@ Only the English strings ship with the plugin, as the Moodle Plugins directory
 asks. Other languages, including Japanese, are translated in AMOS at
 <https://lang.moodle.org/> and reach a site through its installed language packs.
 
-Two option labels in the course settings form — *On* and *Off* — come from core's
-own `filters` strings, not from this plugin, so they follow core's translation.
+Three option labels in the course settings form come from core, not from this
+plugin, so they follow core's translation: *Site default* (core's `sitedefault`)
+and *On* and *Off* (core's `filters` strings).
 
 Privacy
 =======
