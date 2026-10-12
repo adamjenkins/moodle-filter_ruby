@@ -79,6 +79,31 @@ final class config_test extends \advanced_testcase {
     }
 
     /**
+     * Store a site default, as the admin settings page would, and forget the cached settings.
+     *
+     * @param string $name The setting name.
+     * @param string $value The raw value.
+     * @return void
+     */
+    private function set_site(string $name, string $value): void {
+        set_config($name, $value, 'filter_ruby');
+        config::purge_cache();
+    }
+
+    /**
+     * Store a per-context setting, as the course settings form would, and forget the cached settings.
+     *
+     * @param int $contextid The context to store it in.
+     * @param string $name The setting name.
+     * @param string $value The raw value.
+     * @return void
+     */
+    private function set_local(int $contextid, string $name, string $value): void {
+        filter_set_local_config('ruby', $contextid, $name, $value);
+        config::purge_cache();
+    }
+
+    /**
      * With nothing configured anywhere, the documented defaults come back.
      *
      * The chain assertion first is a guard, not decoration: if the generated contexts were not
@@ -115,10 +140,10 @@ final class config_test extends \advanced_testcase {
      * @return void
      */
     public function test_site_defaults_reach_a_context_that_sets_nothing(): void {
-        set_config('wordlist', "漢字=かんじ\n勉強=べんきょう", 'filter_ruby');
-        set_config('displaymode', 'first', 'filter_ruby');
-        set_config('lonekanji', '1', 'filter_ruby');
-        set_config('tier_elementary', '1', 'filter_ruby');
+        $this->set_site('wordlist', "漢字=かんじ\n勉強=べんきょう");
+        $this->set_site('displaymode', 'first');
+        $this->set_site('lonekanji', '1');
+        $this->set_site('tier_elementary', '1');
 
         $resolved = config::for_context($this->modulecontext);
 
@@ -145,12 +170,12 @@ final class config_test extends \advanced_testcase {
      * @return void
      */
     public function test_course_setting_beats_site_setting_and_unset_values_inherit(): void {
-        set_config('displaymode', 'all', 'filter_ruby');
-        set_config('lonekanji', '1', 'filter_ruby');
-        set_config('tier_shs', '1', 'filter_ruby');
+        $this->set_site('displaymode', 'all');
+        $this->set_site('lonekanji', '1');
+        $this->set_site('tier_shs', '1');
 
         // The course overrides the display mode and nothing else.
-        filter_set_local_config('ruby', $this->coursecontext->id, 'displaymode', 'toggle');
+        $this->set_local($this->coursecontext->id, 'displaymode', 'toggle');
 
         $resolved = config::for_context($this->coursecontext);
 
@@ -162,7 +187,7 @@ final class config_test extends \advanced_testcase {
         $this->assertSame('all', config::for_context($this->categorycontext)->displaymode);
 
         // An override may also turn a site flag off, which is not the same as leaving it unset.
-        filter_set_local_config('ruby', $this->coursecontext->id, 'lonekanji', '0');
+        $this->set_local($this->coursecontext->id, 'lonekanji', '0');
         $this->assertFalse(config::for_context($this->coursecontext)->lonekanji);
         $this->assertTrue(config::for_context($this->categorycontext)->lonekanji);
     }
@@ -173,20 +198,20 @@ final class config_test extends \advanced_testcase {
      * @return void
      */
     public function test_the_nearest_context_wins_for_scalars(): void {
-        set_config('displaymode', 'all', 'filter_ruby');
-        filter_set_local_config('ruby', $this->categorycontext->id, 'displaymode', 'first');
+        $this->set_site('displaymode', 'all');
+        $this->set_local($this->categorycontext->id, 'displaymode', 'first');
 
         $this->assertSame('first', config::for_context($this->categorycontext)->displaymode);
         $this->assertSame('first', config::for_context($this->coursecontext)->displaymode);
         $this->assertSame('first', config::for_context($this->modulecontext)->displaymode);
 
-        filter_set_local_config('ruby', $this->coursecontext->id, 'displaymode', 'hover');
+        $this->set_local($this->coursecontext->id, 'displaymode', 'hover');
 
         $this->assertSame('first', config::for_context($this->categorycontext)->displaymode);
         $this->assertSame('hover', config::for_context($this->coursecontext)->displaymode);
         $this->assertSame('hover', config::for_context($this->modulecontext)->displaymode);
 
-        filter_set_local_config('ruby', $this->modulecontext->id, 'displaymode', 'toggle');
+        $this->set_local($this->modulecontext->id, 'displaymode', 'toggle');
 
         $this->assertSame('hover', config::for_context($this->coursecontext)->displaymode);
         $this->assertSame('toggle', config::for_context($this->modulecontext)->displaymode);
@@ -201,14 +226,14 @@ final class config_test extends \advanced_testcase {
      * @return void
      */
     public function test_tier_flags_override_rather_than_merge(): void {
-        set_config('tier_elementary', '1', 'filter_ruby');
-        set_config('tier_jhs', '1', 'filter_ruby');
+        $this->set_site('tier_elementary', '1');
+        $this->set_site('tier_jhs', '1');
 
         $this->assertSame(['elementary', 'jhs'], config::for_context($this->coursecontext)->tiers);
 
         // The course turns elementary off and adds university; jhs is not named, so it inherits.
-        filter_set_local_config('ruby', $this->coursecontext->id, 'tier_elementary', '0');
-        filter_set_local_config('ruby', $this->coursecontext->id, 'tier_university', '1');
+        $this->set_local($this->coursecontext->id, 'tier_elementary', '0');
+        $this->set_local($this->coursecontext->id, 'tier_university', '1');
 
         $this->assertSame(['jhs', 'university'], config::for_context($this->coursecontext)->tiers);
         $this->assertSame(['elementary', 'jhs'], config::for_context($this->categorycontext)->tiers);
@@ -220,10 +245,10 @@ final class config_test extends \advanced_testcase {
      * @return void
      */
     public function test_word_lists_merge_across_the_chain(): void {
-        set_config('wordlist', "金=きん\n漢字=かんじ", 'filter_ruby');
-        filter_set_local_config('ruby', $this->categorycontext->id, 'wordlist', "銀=ぎん\n漢字=カンジ");
-        filter_set_local_config('ruby', $this->coursecontext->id, 'wordlist', "金=かね\n銅=どう");
-        filter_set_local_config('ruby', $this->modulecontext->id, 'wordlist', '鉄=てつ');
+        $this->set_site('wordlist', "金=きん\n漢字=かんじ");
+        $this->set_local($this->categorycontext->id, 'wordlist', "銀=ぎん\n漢字=カンジ");
+        $this->set_local($this->coursecontext->id, 'wordlist', "金=かね\n銅=どう");
+        $this->set_local($this->modulecontext->id, 'wordlist', '鉄=てつ');
 
         $this->assertSame(
             ['金' => 'きん', '漢字' => 'かんじ'],
@@ -254,8 +279,8 @@ final class config_test extends \advanced_testcase {
      * @return void
      */
     public function test_stored_word_list_edge_cases(): void {
-        set_config('wordlist', "金=きん\nno separator here\n=orphan\n漢字=かんじ", 'filter_ruby');
-        filter_set_local_config('ruby', $this->coursecontext->id, 'wordlist', "# a comment\n\n金=\n勉強=べんきょう");
+        $this->set_site('wordlist', "金=きん\nno separator here\n=orphan\n漢字=かんじ");
+        $this->set_local($this->coursecontext->id, 'wordlist', "# a comment\n\n金=\n勉強=べんきょう");
 
         $resolved = config::for_context($this->coursecontext);
 
@@ -277,7 +302,7 @@ final class config_test extends \advanced_testcase {
      * @dataProvider bad_displaymode_provider
      */
     public function test_unrecognised_displaymode_falls_back_to_all(string $stored): void {
-        filter_set_local_config('ruby', $this->coursecontext->id, 'displaymode', $stored);
+        $this->set_local($this->coursecontext->id, 'displaymode', $stored);
 
         $this->assertSame('all', config::for_context($this->coursecontext)->displaymode);
     }
@@ -313,12 +338,12 @@ final class config_test extends \advanced_testcase {
         $blockcontext = \core\context\block::instance($block->id);
         $usercontext = \core\context\user::instance($this->getDataGenerator()->create_user()->id);
 
-        set_config('displaymode', 'hover', 'filter_ruby');
-        filter_set_local_config('ruby', $this->coursecontext->id, 'displaymode', 'first');
-        filter_set_local_config('ruby', $this->coursecontext->id, 'wordlist', '金=きん');
-        filter_set_local_config('ruby', $blockcontext->id, 'displaymode', 'toggle');
-        filter_set_local_config('ruby', $blockcontext->id, 'wordlist', '銀=ぎん');
-        filter_set_local_config('ruby', $usercontext->id, 'displaymode', 'toggle');
+        $this->set_site('displaymode', 'hover');
+        $this->set_local($this->coursecontext->id, 'displaymode', 'first');
+        $this->set_local($this->coursecontext->id, 'wordlist', '金=きん');
+        $this->set_local($blockcontext->id, 'displaymode', 'toggle');
+        $this->set_local($blockcontext->id, 'wordlist', '銀=ぎん');
+        $this->set_local($usercontext->id, 'displaymode', 'toggle');
 
         $resolved = config::for_context($blockcontext);
 
@@ -329,5 +354,60 @@ final class config_test extends \advanced_testcase {
             config::for_context($usercontext)->displaymode,
             'the user row must not override the site default'
         );
+    }
+
+    /**
+     * Settings are resolved once per context per request, and shared rows are read once.
+     *
+     * A second activity in the same course already has the system, category and course rows
+     * cached, so resolving it costs at most the one query for its own rows; resolving any
+     * context again costs nothing. A change made behind the cache's back stays invisible until
+     * purge_cache(), which is why the settings form calls it after saving.
+     *
+     * @return void
+     */
+    public function test_settings_are_cached_for_the_request(): void {
+        global $DB;
+
+        $this->set_local($this->coursecontext->id, 'wordlist', '金=かね');
+        $page = $this->getDataGenerator()->create_module('page', ['course' => $this->coursecontext->instanceid]);
+        $siblingcontext = \core\context\module::instance($page->cmid);
+        config::purge_cache();
+
+        $this->assertSame(['金' => 'かね'], config::for_context($this->modulecontext)->wordlist);
+
+        $reads = $DB->perf_get_reads();
+        $this->assertSame(['金' => 'かね'], config::for_context($siblingcontext)->wordlist);
+        $this->assertLessThanOrEqual(1, $DB->perf_get_reads() - $reads, 'only the sibling\'s own rows may be read');
+
+        $reads = $DB->perf_get_reads();
+        config::for_context($this->modulecontext);
+        config::for_context($siblingcontext);
+        config::for_context($this->coursecontext);
+        $this->assertSame(0, $DB->perf_get_reads() - $reads, 'resolved settings must come from the cache');
+
+        // Changed without telling the cache: still the old value in this request.
+        filter_set_local_config('ruby', $this->coursecontext->id, 'wordlist', '金=きん');
+        $this->assertSame(['金' => 'かね'], config::for_context($this->modulecontext)->wordlist);
+
+        config::purge_cache();
+        $this->assertSame(['金' => 'きん'], config::for_context($this->modulecontext)->wordlist);
+    }
+
+    /**
+     * Changing the object a caller gets back does not change what the next caller gets.
+     *
+     * @return void
+     */
+    public function test_callers_get_independent_copies(): void {
+        $this->set_local($this->coursecontext->id, 'displaymode', 'hover');
+
+        $first = config::for_context($this->coursecontext);
+        $first->displaymode = 'toggle';
+        $first->wordlist['金'] = 'かね';
+
+        $second = config::for_context($this->coursecontext);
+        $this->assertSame('hover', $second->displaymode);
+        $this->assertSame([], $second->wordlist);
     }
 }

@@ -22,6 +22,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['cachedef_config'] = 'Resolved filter settings for each context, kept for one request';
+$string['cachedef_dictionary'] = 'Compiled word lists and tier dictionaries for each resolved configuration';
 $string['displaymode'] = 'Display mode';
 $string['displaymode_all'] = 'Always show, on every occurrence';
 $string['displaymode_first'] = 'Show on the first occurrence of each word only';

@@ -204,6 +204,9 @@ class ruby_filter_local_settings_form extends \filter_local_settings_form {
                 filter_set_local_config($this->filter, $this->context->id, $name, $value);
             }
         }
+
+        // Anything filtered later in this request must see the new settings.
+        \filter_ruby\local\config::purge_cache();
     }
 
     /**

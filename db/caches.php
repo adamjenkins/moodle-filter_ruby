@@ -37,4 +37,13 @@ $definitions = [
         'staticacceleration' => true,
         'staticaccelerationsize' => 4,
     ],
+    // The resolved settings of each context filtered in this request, and each
+    // context's own filter_config rows (classes/local/config.php). Request
+    // scoped because core announces no change to filter_config, so a longer
+    // lived copy could not be invalidated reliably.
+    'config' => [
+        'mode' => core_cache\store::MODE_REQUEST,
+        'simplekeys' => true,
+        'simpledata' => true,
+    ],
 ];

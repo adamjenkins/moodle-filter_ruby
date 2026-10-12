@@ -25,6 +25,8 @@
 
 namespace filter_ruby;
 
+use filter_ruby\local\config;
+
 /**
  * Unit tests for {@see \filter_ruby\text_filter}.
  *
@@ -67,12 +69,37 @@ final class text_filter_test extends \advanced_testcase {
     }
 
     /**
+     * Store a site default, as the admin settings page would, and forget the cached settings.
+     *
+     * @param string $name The setting name.
+     * @param string $value The raw value.
+     * @return void
+     */
+    private function set_site(string $name, string $value): void {
+        set_config($name, $value, 'filter_ruby');
+        config::purge_cache();
+    }
+
+    /**
+     * Store a per-context setting, as the course settings form would, and forget the cached settings.
+     *
+     * @param int $contextid The context to store it in.
+     * @param string $name The setting name.
+     * @param string $value The raw value.
+     * @return void
+     */
+    private function set_local(int $contextid, string $name, string $value): void {
+        filter_set_local_config('ruby', $contextid, $name, $value);
+        config::purge_cache();
+    }
+
+    /**
      * A word from the course list is annotated, in place, inside the surrounding markup.
      *
      * @return void
      */
     public function test_a_configured_word_is_annotated_in_place(): void {
-        filter_set_local_config('ruby', $this->coursecontext->id, 'wordlist', '漢字=かんじ');
+        $this->set_local($this->coursecontext->id, 'wordlist', '漢字=かんじ');
 
         $filtered = $this->make_filter()->filter('<p>これは漢字です。</p>');
 
@@ -90,8 +117,8 @@ final class text_filter_test extends \advanced_testcase {
      * @return void
      */
     public function test_the_course_word_list_beats_the_site_word_list(): void {
-        set_config('wordlist', "金=きん\n銀=ぎん", 'filter_ruby');
-        filter_set_local_config('ruby', $this->coursecontext->id, 'wordlist', '金=かね');
+        $this->set_site('wordlist', "金=きん\n銀=ぎん");
+        $this->set_local($this->coursecontext->id, 'wordlist', '金=かね');
 
         $filtered = $this->make_filter()->filter('金と銀');
 
@@ -119,7 +146,7 @@ final class text_filter_test extends \advanced_testcase {
      * @return void
      */
     public function test_text_without_kanji_passes_through_unchanged(): void {
-        filter_set_local_config('ruby', $this->coursecontext->id, 'wordlist', '漢字=かんじ');
+        $this->set_local($this->coursecontext->id, 'wordlist', '漢字=かんじ');
         $filter = $this->make_filter();
 
         $text = '<p>Plain English, ひらがな and カタカナ &amp; an entity.</p>';
@@ -152,8 +179,8 @@ final class text_filter_test extends \advanced_testcase {
      * @return void
      */
     public function test_first_mode_annotates_only_the_first_occurrence_on_the_page(): void {
-        filter_set_local_config('ruby', $this->coursecontext->id, 'wordlist', '漢字=かんじ');
-        filter_set_local_config('ruby', $this->coursecontext->id, 'displaymode', 'first');
+        $this->set_local($this->coursecontext->id, 'wordlist', '漢字=かんじ');
+        $this->set_local($this->coursecontext->id, 'displaymode', 'first');
         $filter = $this->make_filter();
 
         $this->assertSame('<p>' . $this->ruby('漢字', 'かんじ') . '</p>', $filter->filter('<p>漢字</p>'));
@@ -173,7 +200,7 @@ final class text_filter_test extends \advanced_testcase {
      * @return void
      */
     public function test_the_filter_runs_at_the_post_clean_stage_only(): void {
-        filter_set_local_config('ruby', $this->coursecontext->id, 'wordlist', '漢字=かんじ');
+        $this->set_local($this->coursecontext->id, 'wordlist', '漢字=かんじ');
         $filter = $this->make_filter();
         $text = '<p>漢字</p>';
 
@@ -194,7 +221,7 @@ final class text_filter_test extends \advanced_testcase {
         string $displaymode,
         bool $expectsjs,
     ): void {
-        filter_set_local_config('ruby', $this->coursecontext->id, 'displaymode', $displaymode);
+        $this->set_local($this->coursecontext->id, 'displaymode', $displaymode);
 
         $page = new \moodle_page();
         $page->set_context($this->coursecontext);

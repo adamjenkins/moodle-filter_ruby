@@ -54,6 +54,18 @@ namespace filter_ruby\local;
  * skipped rather than read, so a stray `filter_config` row on one of them
  * cannot take effect.
  *
+ * Both the resolved settings and each context's own `filter_config` rows are
+ * kept in the request cache `filter_ruby/config` (`db/caches.php`). A page
+ * with many activities in one course therefore reads the system, category
+ * and course rows once, fetches the rows of every context still missing in a
+ * single query, and resolves each context once even though core asks for it
+ * from both `setup()` and `filter()`. The cache lives for one request only on
+ * purpose: core announces no change to `filter_config` (`filter_set_local_config()`
+ * just writes the row, and restore, context deletion and course moves change
+ * what a context resolves to as well), so a longer-lived copy could serve stale
+ * settings. Code that changes the settings and then filters text in the same
+ * request calls {@see self::purge_cache()}.
+ *
  * @package    filter_ruby
  * @copyright  2026 Adam Jenkins <adam@wisecat.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -86,6 +98,15 @@ class config {
     /** @var string Prefix of the four per-tier on/off settings, completed by a name from TIERS. */
     private const SETTING_TIER_PREFIX = 'tier_';
 
+    /** @var string The request cache holding resolved settings and per-context rows (db/caches.php). */
+    private const CACHE_AREA = 'config';
+
+    /** @var string Cache key prefix for a context's resolved settings, completed by the context id. */
+    private const KEY_RESOLVED = 'resolved_';
+
+    /** @var string Cache key prefix for a context's own filter_config rows, completed by the context id. */
+    private const KEY_LAYER = 'layer_';
+
     /**
      * Resolve the effective settings for a context.
      *
@@ -95,13 +116,91 @@ class config {
      *                   one of DISPLAY_MODES) and lonekanji (bool).
      */
     public static function for_context(\core\context $context): \stdClass {
-        $layers = [self::site_layer()];
+        $cache = \cache::make('filter_ruby', self::CACHE_AREA);
+        $key = self::KEY_RESOLVED . $context->id;
 
-        foreach (self::settable_context_ids($context) as $contextid) {
-            $layers[] = filter_get_local_config(self::FILTERNAME, $contextid);
+        $resolved = $cache->get($key);
+        if (!is_array($resolved)) {
+            $layers = array_merge([self::site_layer()], self::context_layers(self::settable_context_ids($context)));
+            $resolved = (array) self::resolve($layers);
+            $cache->set($key, $resolved);
         }
 
-        return self::resolve($layers);
+        // A fresh object on every call, so a caller changing it cannot change what the next caller gets.
+        return (object) $resolved;
+    }
+
+    /**
+     * Forget the settings cached in this request.
+     *
+     * Needed only by code that changes the filter's settings and then filters
+     * text in the same request: the settings form after it saves, and tests.
+     *
+     * @return void
+     */
+    public static function purge_cache(): void {
+        \cache::make('filter_ruby', self::CACHE_AREA)->purge();
+    }
+
+    /**
+     * Each context's own filter_config rows for this filter, in the order given.
+     *
+     * Rows already cached in this request are reused; the rest are fetched in one query.
+     *
+     * @param int[] $contextids The context ids, ordered from the system context down.
+     * @return array[] One map of setting name to raw value per context id, in the same order.
+     */
+    private static function context_layers(array $contextids): array {
+        global $DB;
+
+        if (!$contextids) {
+            return [];
+        }
+
+        $cache = \cache::make('filter_ruby', self::CACHE_AREA);
+        $keys = [];
+        foreach ($contextids as $contextid) {
+            $keys[$contextid] = self::KEY_LAYER . $contextid;
+        }
+        $cached = $cache->get_many(array_values($keys));
+
+        $missing = [];
+        foreach ($keys as $contextid => $key) {
+            if (!is_array($cached[$key])) {
+                $missing[] = $contextid;
+            }
+        }
+
+        if ($missing) {
+            $fetched = array_fill_keys($missing, []);
+            [$insql, $params] = $DB->get_in_or_equal($missing, SQL_PARAMS_NAMED);
+            $params['filter'] = self::FILTERNAME;
+            $rows = $DB->get_recordset_select(
+                'filter_config',
+                "filter = :filter AND contextid $insql",
+                $params,
+                '',
+                'id, contextid, name, value'
+            );
+            foreach ($rows as $row) {
+                $fetched[(int) $row->contextid][$row->name] = $row->value;
+            }
+            $rows->close();
+
+            $tostore = [];
+            foreach ($fetched as $contextid => $layer) {
+                $tostore[$keys[$contextid]] = $layer;
+                $cached[$keys[$contextid]] = $layer;
+            }
+            $cache->set_many($tostore);
+        }
+
+        $layers = [];
+        foreach ($keys as $key) {
+            $layers[] = $cached[$key];
+        }
+
+        return $layers;
     }
 
     /**
