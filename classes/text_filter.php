@@ -205,7 +205,10 @@ class text_filter extends \core_filters\text_filter {
             return;
         }
 
-        $config = config::for_context($context);
+        // Core builds this filter for the context it is set up for, so its $localconfig holds
+        // that context's own settings; anything else is read by config like the parent layers.
+        $ownconfig = ((int) $context->id === (int) $this->context->id) ? $this->localconfig : null;
+        $config = config::for_context($context, $ownconfig);
         if (!in_array($config->displaymode, self::JS_MODES, true)) {
             return;
         }
@@ -267,7 +270,7 @@ class text_filter extends \core_filters\text_filter {
             return;
         }
 
-        $config = config::for_context($this->context);
+        $config = config::for_context($this->context, $this->localconfig);
         $this->dictionary = dictionary::for_context($this->context, $config);
         $this->annotator = new annotator($this->dictionary, $config->displaymode, (bool) $config->lonekanji);
     }

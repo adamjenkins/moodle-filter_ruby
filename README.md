@@ -176,7 +176,8 @@ cleaning has already run.
 the filter runs on every page render. The compiled word map is cached (MUC
 application cache `filter_ruby/dictionary`), and each context's resolved settings
 are cached for the request (MUC request cache `filter_ruby/config`), so a page with
-many activities reads the shared site, category and course settings once. The text
+many activities reads the shared site, category and course settings once, and each
+activity's own settings come from what Moodle has already loaded for the filter. The text
 scan itself is not cached. The settings cache lasts one request on purpose: Moodle
 announces no change to filter settings, so a longer-lived copy could go stale.
 

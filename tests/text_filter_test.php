@@ -249,12 +249,13 @@ final class text_filter_test extends \advanced_testcase {
      *
      * Built fresh by each test, after that test has written its settings,
      * because the filter resolves and compiles its configuration once and then
-     * keeps it for the life of the object.
+     * keeps it for the life of the object. Like core, it hands the filter the
+     * context's own settings as its local configuration.
      *
      * @return text_filter The filter under test.
      */
     private function make_filter(): text_filter {
-        return new text_filter($this->coursecontext, []);
+        return new text_filter($this->coursecontext, filter_get_local_config('ruby', $this->coursecontext->id));
     }
 
     /**

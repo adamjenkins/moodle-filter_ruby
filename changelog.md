@@ -23,8 +23,9 @@ Entries are ordered newest-first.
   context's own `filter_config` rows, in a new request cache
   (`filter_ruby/config`). Rows shared along a context path are read once per
   request, missing rows are fetched in one query, and `setup()` and `filter()`
-  no longer resolve the same context twice. The course settings form purges the
-  cache after saving.
+  no longer resolve the same context twice. The filter hands over its own
+  context's rows from core's `$localconfig`, so they are not queried again. The
+  course settings form purges the cache after saving.
 
 ---
 

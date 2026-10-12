@@ -359,10 +359,12 @@ final class config_test extends \advanced_testcase {
     /**
      * Settings are resolved once per context per request, and shared rows are read once.
      *
-     * A second activity in the same course already has the system, category and course rows
-     * cached, so resolving it costs at most the one query for its own rows; resolving any
-     * context again costs nothing. A change made behind the cache's back stays invisible until
-     * purge_cache(), which is why the settings form calls it after saving.
+     * The first activity reads the system, category and course rows. A second activity in the
+     * same course, handed its own rows the way core hands them to the filter, then costs no query
+     * at all, and resolving any context again costs nothing. The assertions count reads only where
+     * the answer is zero: how many reads one query costs depends on the driver (on PostgreSQL an
+     * unlimited recordset is a cursor, three statements). A change made behind the cache's back
+     * stays invisible until purge_cache(), which is why the settings form calls it after saving.
      *
      * @return void
      */
@@ -372,13 +374,14 @@ final class config_test extends \advanced_testcase {
         $this->set_local($this->coursecontext->id, 'wordlist', '金=かね');
         $page = $this->getDataGenerator()->create_module('page', ['course' => $this->coursecontext->instanceid]);
         $siblingcontext = \core\context\module::instance($page->cmid);
+        $siblingrows = filter_get_local_config('ruby', $siblingcontext->id);
         config::purge_cache();
 
         $this->assertSame(['金' => 'かね'], config::for_context($this->modulecontext)->wordlist);
 
         $reads = $DB->perf_get_reads();
-        $this->assertSame(['金' => 'かね'], config::for_context($siblingcontext)->wordlist);
-        $this->assertLessThanOrEqual(1, $DB->perf_get_reads() - $reads, 'only the sibling\'s own rows may be read');
+        $this->assertSame(['金' => 'かね'], config::for_context($siblingcontext, $siblingrows)->wordlist);
+        $this->assertSame(0, $DB->perf_get_reads() - $reads, 'cached parents plus the given rows need no query');
 
         $reads = $DB->perf_get_reads();
         config::for_context($this->modulecontext);
@@ -392,6 +395,24 @@ final class config_test extends \advanced_testcase {
 
         config::purge_cache();
         $this->assertSame(['金' => 'きん'], config::for_context($this->modulecontext)->wordlist);
+    }
+
+    /**
+     * The context's own rows, when the caller has them, are used instead of being read again.
+     *
+     * The filter passes core's $localconfig. Rows given for the context win over what is in the
+     * database, which proves they are the ones used; the parent layers are still read.
+     *
+     * @return void
+     */
+    public function test_the_given_own_rows_are_used(): void {
+        $this->set_site('displaymode', 'first');
+        $this->set_local($this->coursecontext->id, 'wordlist', '金=かね');
+
+        $resolved = config::for_context($this->modulecontext, ['displaymode' => 'hover']);
+
+        $this->assertSame('hover', $resolved->displaymode);
+        $this->assertSame(['金' => 'かね'], $resolved->wordlist);
     }
 
     /**

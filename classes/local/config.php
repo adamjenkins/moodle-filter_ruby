@@ -59,11 +59,14 @@ namespace filter_ruby\local;
  * with many activities in one course therefore reads the system, category
  * and course rows once, fetches the rows of every context still missing in a
  * single query, and resolves each context once even though core asks for it
- * from both `setup()` and `filter()`. The cache lives for one request only on
- * purpose: core announces no change to `filter_config` (`filter_set_local_config()`
- * just writes the row, and restore, context deletion and course moves change
- * what a context resolves to as well), so a longer-lived copy could serve stale
- * settings. Code that changes the settings and then filters text in the same
+ * from both `setup()` and `filter()`. The filter also hands over the rows of its
+ * own context that core has already loaded (its `$localconfig`), so an activity
+ * whose parent contexts are cached costs no query at all.
+ *
+ * The cache lives for one request only on purpose: core announces no change
+ * to `filter_config` (`filter_set_local_config()` just writes the row, and
+ * restore, context deletion and course moves change what a context resolves
+ * to as well), so a longer-lived copy could serve stale settings. Code that changes the settings and then filters text in the same
  * request calls {@see self::purge_cache()}.
  *
  * @package    filter_ruby
@@ -111,16 +114,24 @@ class config {
      * Resolve the effective settings for a context.
      *
      * @param \core\context $context The context the text is being filtered in.
+     * @param array|null $ownconfig This context's own filter_config rows for this filter, as a map of
+     *                   name to value, when the caller already has them: core loads them for every
+     *                   filter it builds and passes them to the filter's constructor as `$localconfig`
+     *                   (`filter_get_active_in_context()`, lib/filterlib.php). Null means unknown, and
+     *                   they are then read from the database with the other layers.
      * @return \stdClass Object with properties wordlist (array of word to reading),
      *                   tiers (array of enabled tier names), displaymode (string,
      *                   one of DISPLAY_MODES) and lonekanji (bool).
      */
-    public static function for_context(\core\context $context): \stdClass {
+    public static function for_context(\core\context $context, ?array $ownconfig = null): \stdClass {
         $cache = \cache::make('filter_ruby', self::CACHE_AREA);
         $key = self::KEY_RESOLVED . $context->id;
 
         $resolved = $cache->get($key);
         if (!is_array($resolved)) {
+            if ($ownconfig !== null && !is_array($cache->get(self::KEY_LAYER . $context->id))) {
+                $cache->set(self::KEY_LAYER . $context->id, $ownconfig);
+            }
             $layers = array_merge([self::site_layer()], self::context_layers(self::settable_context_ids($context)));
             $resolved = (array) self::resolve($layers);
             $cache->set($key, $resolved);
@@ -175,7 +186,9 @@ class config {
             $fetched = array_fill_keys($missing, []);
             [$insql, $params] = $DB->get_in_or_equal($missing, SQL_PARAMS_NAMED);
             $params['filter'] = self::FILTERNAME;
-            $rows = $DB->get_recordset_select(
+            // A plain get_records_select(), not a recordset: on PostgreSQL an unlimited recordset runs
+            // through a cursor (DECLARE, FETCH, CLOSE), three statements for a handful of rows.
+            $rows = $DB->get_records_select(
                 'filter_config',
                 "filter = :filter AND contextid $insql",
                 $params,
@@ -185,7 +198,6 @@ class config {
             foreach ($rows as $row) {
                 $fetched[(int) $row->contextid][$row->name] = $row->value;
             }
-            $rows->close();
 
             $tostore = [];
             foreach ($fetched as $contextid => $layer) {
